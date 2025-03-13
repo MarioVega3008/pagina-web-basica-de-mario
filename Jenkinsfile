@@ -1,51 +1,33 @@
 pipeline {
-    agent any
-    
+    environment {
+        JAVA_TOOL_OPTIONS = "-Duser.home=/home/jenkins"
+    }
+    agent {
+        docker {
+            image 'maven:3.6.3-jdk-13'
+            args '-v /tmp/maven:/home/jenkins/.m2 -e MAVEN_CONFIG=/home/jenkins/.m2'
+        }
+    }
     stages {
-        stage('Checkout Código') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/MarioVega3008/pagina-web-basica-de-mario.git'
+                // Clonar el repositorio desde GitHub
+                git url: 'https://github.com/3ct-mx/spring-boot-computadoras.git', branch: 'main'
             }
         }
-        
-        stage('Instalar Dependencias') {
+        stage('Build') {
             steps {
-                bat 'npm install'
-            }
-        }
-        
-        stage('Compilar Aplicación') {
-            steps {
-                bat 'npm run build'
-            }
-        }
-        
-        stage('Ejecutar Pruebas') {
-            steps {
-                bat 'npm test'
-            }
-        }
-        
-        stage('Empaquetar y Archivar') {
-            steps {
-                archiveArtifacts artifacts: 'dist/**', fingerprint: true
-            }
-        }
-        
-        stage('Despliegue') {
-            steps {
-                echo 'Desplegando la aplicación...'
-                // Aquí puedes agregar comandos para desplegar en un servidor web como Apache, Nginx o Vercel
+                // Compilar el proyecto usando Maven
+                sh 'mvn clean install'
             }
         }
     }
-    
     post {
         success {
             echo 'Build completed successfully!'
         }
         failure {
-            echo 'Build completed failed!'
+            echo 'Build failed.'
         }
     }
 }
